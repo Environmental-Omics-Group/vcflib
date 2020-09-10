@@ -204,12 +204,14 @@ int main(int argc, char** argv) {
     vector<string> samples = variantFile.sampleNames;
     int nsamples = samples.size();
 
+    int nline = 0;
     while (variantFile.getNextVariant(var)) {
-        
+        nline += 1;
 	// biallelic sites naturally 
 
 	if(var.alt.size() > 1){
-	  continue;
+	  cerr << "WARNING: Skipping line [" << nline << "] due to alt size > 1" << endl;
+          continue;
 	}
 	
 	vector < map< string, vector<string> > > target, background, total;
@@ -233,7 +235,8 @@ int main(int argc, char** argv) {
 
 
 	if(target.size() < 5 || background.size() < 5){
-	  continue;
+	  cerr << "WARNING: Skipping line [" << nline << "] due to pop size < 5" << endl;
+          continue;
 	}
 	
 	genotype * populationTarget      ;
@@ -260,24 +263,29 @@ int main(int argc, char** argv) {
 	populationBackground->loadPop(background, var.sequenceName, var.position);
 
 	if(populationTarget->af == -1 || populationBackground->af == -1){
+	  cerr << "WARNING: Skipping line [" << nline << "] due to af == -1" << endl;
 	  delete populationTarget;
 	  delete populationBackground;
-	  continue;
+          continue;
 	}
+
 	if(populationTarget->af == 1 &&  populationBackground->af == 1){
-	  delete populationTarget;
-          delete populationBackground;
-	  continue;
+	  cerr << "INFO: Detecting line [" << nline << "] with population target af = background af = 1" << endl;
+	  //delete populationTarget;
+          //delete populationBackground;
+          //continue;
 	}
 	if(populationTarget->af == 0 &&  populationBackground->af == 0){
-	  delete populationTarget;
-          delete populationBackground;
-	  continue;
+	  cerr << "INFO: Detecting line [" << nline << "] with population target af = background af = 0" << endl;
+	  //delete populationTarget;
+          //delete populationBackground;
+          //continue;
 	}
 
 	double afdiff = abs(populationTarget->af - populationBackground->af);
 
         if(afdiff < daf){
+          cerr << "WARNING: Skipping line [" << nline << "] due to af diff < daf" << endl;
 	  delete populationTarget;
           delete populationBackground;
           continue;
